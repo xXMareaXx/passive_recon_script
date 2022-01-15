@@ -1,0 +1,2 @@
+https://github.com/projectdiscovery/subfinder
+https://github.com/projectdiscovery/nuclei

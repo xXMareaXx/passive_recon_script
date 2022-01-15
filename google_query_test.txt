@@ -1,0 +1,2 @@
+filetype:pl -intext:"/usr/bin/perl" inurl:webcal (inurl:webcal | inurl:add | inurl:delete | inurl:config)
+intitle:"Ganglia" "Cluster Report for"
