@@ -7,7 +7,7 @@ import shodan
 from urllib.parse import urlparse
 
 GOOGLE_DORKS_OPTIONS = {
-    1:  ["Footholds", "footholds_query.txt"],
+    1:  ["Footholds",                      "footholds_query.txt"],
     2:  ["File Containing Usernames",      "file_usernames_query.txt"],
     3:  ["Sensitives Directories",         "sensitives_directories_query.txt"],
     4:  ["Web Server Detection",           "webserver_query.txt"],
@@ -36,14 +36,21 @@ def run_subfinder(url):
     # Method for running gsubfinder (-s option)
     os.system("subfinder -d " + urlparse(url).netloc) #Using urlparse for getting domain from URL
 
-def run_google_dorking(url):
+def run_google_dorking(hosts_file, query_file):
     # Method for running google dorks (-g option)
     results = []
-    google_queries = read_file("google_query_test.txt")
+    print(hosts_file)
+    print(query_file)
+    google_queries = read_file("google_queries/" + query_file)
+    hosts          = read_file(hosts_file)
+    #print(hosts)
     for query in google_queries:
-        print("--------------- Query: " + query + " ---------------")
-        for j in search(query + " inurl:" + urlparse(url).netloc, num = 15, lang = "en", pause = 5):
-            results.append(j)
+        for host in hosts:
+            print("--------------- Query: " + query + " ---------------")
+            print(host)
+            print(urlparse(host).netloc)
+            for j in search(query + " inurl:" + urlparse(host).netloc, num = 15, lang = "en", pause = 10):
+                results.append(j)
     return results
 
 def run_nuclei(url):
@@ -88,9 +95,8 @@ def main():
     args, unknownargs = parser.parse_known_args()
     print(args)
     print(unknownargs)
-
-    for host in read_file(args.host_file):
-        run_google_dorking(host)
+    print(args.g)
+    run_google_dorking("hosts.txt", GOOGLE_DORKS_OPTIONS[int(args.g)][1])
 
 
 if __name__ == '__main__':
