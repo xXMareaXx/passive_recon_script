@@ -6,21 +6,21 @@ import argparse
 import shodan
 from urllib.parse import urlparse
 
-GOOGLE_DORKS_OPTIONS = {
-    1:  ["Footholds",                      "footholds_query.txt"],
-    2:  ["File Containing Usernames",      "file_usernames_query.txt"],
-    3:  ["Sensitives Directories",         "sensitives_directories_query.txt"],
-    4:  ["Web Server Detection",           "webserver_query.txt"],
-    5:  ["Vulnerable Files",               "vulnerable_files_query.txt"],
-    6:  ["Vulnerable Servers",             "vulnerable_servers_query.txt"],
-    7:  ["Error Messages",                 "error_messages_query.txt"],
-    8:  ["File Containing Juicy Info",     "files_juicy_info_query.txt"],
-    9:  ["File Containing Passwords",      "files_passwords_query.txt"],
-    10: ["Sensitive Online Shopping Info", "sensitive_shopping_info.txt"],
-    11: ["Network or Vulnerability Data",  "network_vuln_data.query"],
-    12: ["Pages Containing Login Portals", "login_portals.query"],
-    13: ["Various Online devices",         "online_devices_query.txt"],
-    14: ["Advisories and Vulnerabilities", "advisories_vulnerabilities_query.txt"]
+GOOGLE_DORKS_OPTIONS_FILES = {
+    1:  "footholds_query.txt",
+    2:  "file_usernames_query.txt",
+    3:  "sensitives_directories_query.txt",
+    4:  "webserver_query.txt",
+    5:  "vulnerable_files_query.txt",
+    6:  "vulnerable_servers_query.txt",
+    7:  "error_messages_query.txt",
+    8:  "files_juicy_info_query.txt",
+    9:  "files_passwords_query.txt",
+    10: "sensitive_shopping_info.txt",
+    11: "network_vuln_data.query",
+    12: "login_portals.query",
+    13: "online_devices_query.txt",
+    14: "advisories_vulnerabilities_query.txt"
 }
 
 def install_tool():
@@ -36,21 +36,21 @@ def run_subfinder(url):
     # Method for running gsubfinder (-s option)
     os.system("subfinder -d " + urlparse(url).netloc) #Using urlparse for getting domain from URL
 
-def run_google_dorking(hosts_file, query_file):
+def run_google_dorking(option):
     # Method for running google dorks (-g option)
     results = []
-    print(hosts_file)
+    query_file = GOOGLE_DORKS_OPTIONS_FILES[option]
     print(query_file)
     google_queries = read_file("google_queries/" + query_file)
-    hosts          = read_file(hosts_file)
+    hosts          = read_file("hosts.txt")
     #print(hosts)
     for query in google_queries:
         for host in hosts:
             print("--------------- Query: " + query + " ---------------")
             print(host)
             print(urlparse(host).netloc)
-            for j in search(query + " inurl:" + urlparse(host).netloc, num = 15, lang = "en", pause = 10):
-                results.append(j)
+            for j in search(query + " inurl:" + urlparse(host).netloc, num = 15, lang = "en", pause = 15):
+                results.append({"query": query, "result": j})
     return results
 
 def run_nuclei(url):
@@ -96,7 +96,7 @@ def main():
     print(args)
     print(unknownargs)
     print(args.g)
-    run_google_dorking("hosts.txt", GOOGLE_DORKS_OPTIONS[int(args.g)][1])
+    run_google_dorking(int(args.g))
 
 
 if __name__ == '__main__':
