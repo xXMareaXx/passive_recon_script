@@ -35,7 +35,7 @@ def get_domain_from_url(url):
         print(colored(e, "red"))
 
 def read_file(file_name):
-    # Method for reading the hosts file
+    # Method for reading a file line by line
     try:
         file1 = open(file_name, 'r')
         return file1.readlines()
@@ -43,8 +43,8 @@ def read_file(file_name):
         print(colored(e, "red"))
 
 def run_subfinder(url):
+    # Method for running gsubfinder (-sub option)
     try:
-        # Method for running gsubfinder (-sub option)
         os.system("subfinder -d " + get_domain_from_url(url)) #Using urlparse for getting domain from URL
     except Exception as e:
         print(colored(e, "red"))
@@ -55,10 +55,7 @@ def run_google_dorking(option, url):
     query_file     = GOOGLE_DORKS_OPTIONS_FILES[option]
     try:
         google_queries = read_file("google_queries/" + query_file)
-        hosts          = read_file("hosts.txt")
         for query in google_queries:
-            print("Sleeping for 5 secs...")
-            time.sleep(5)
             print("---- " + query + " ----")
             for j in search(query + " inurl:" + get_domain_from_url(url), num = 5, lang = "en", pause = 60):
                 results.append({"query": query, "result": j})
@@ -67,31 +64,31 @@ def run_google_dorking(option, url):
     return results
 
 def run_nuclei(url):
+    # Method for running nuclei with all templates (-n option)
     try:
-        # Method for running nuclei with all templates (-n option)
-        os.system("nuclei -u " + url) #Using urlparse for getting domain from URL
+        os.system("nuclei -u " + url)
     except Exception as e:
         print(colored(e, "red"))
 
 def run_nslookup(url):
+    # Method for running nslookup (-ns option)
     print(colored("--------------------- NSLOOKUP ---------------------", "green"))
     try:
-        # Method for running nslookup (-ns option)
         os.system("nslookup " + url)
     except Exception as e:
         print(colored(e, "red"))
   
 def run_whatweb(url):
+    # Method for running whatweb (-w option)
     print(colored("--------------------- WHATWEB ---------------------", "green"))
     try:
-        # Method for running whatweb (-w option)
         os.system("whatweb " + url)
     except Exception as e:
         print(colored(e, "red"))
 
 def run_shodan(url):
+    # Method for running shodan (-s option)
     try:
-        # Method for running shodan (-s option)
         print("Plantear si hacer shodan")
     except Exception as e:
         print(colored(e, "red"))
