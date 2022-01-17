@@ -7,6 +7,7 @@ import shodan
 from urllib.parse import urlparse
 import time
 from termcolor import colored
+import yaml
 
 GOOGLE_DORKS_OPTIONS_FILES = {
     0:  "custom_queries.txt",
@@ -26,7 +27,14 @@ GOOGLE_DORKS_OPTIONS_FILES = {
     14: "advisories_vulnerabilities_query.txt"
 }
 
-CONFIG_FILE = "config.yml"  
+CONFIG_FILE = "config.yml"
+
+def read_config_file():
+    try:
+        file = open("config.yml", "r")
+        return yaml.safe_load(file)
+    except Exception as e:
+        print(colored(e, "red"))
 
 def get_domain_from_url(url):
     try:
@@ -77,7 +85,7 @@ def run_nslookup(url):
         os.system("nslookup " + url)
     except Exception as e:
         print(colored(e, "red"))
-  
+
 def run_whatweb(url):
     # Method for running whatweb (-w option)
     print(colored("--------------------- WHATWEB ---------------------", "green"))
@@ -93,13 +101,32 @@ def run_shodan(url):
     except Exception as e:
         print(colored(e, "red"))
 
+def run_theharvester(url):
+    # Method for running TheHarvester (-th option)
+    try:
+        print("Running The Harvester...")
+    except Exception as e:
+        print(colored(e, "red"))
+
+
+def run_metagoofil(file_type, url):
+    print(colored("--------------------- METAGOOFIL ---------------------", "green"))
+    # Method for running Metagoofil (-m)
+    try:
+        configuration = read_config_file()
+        os.system("metagoofil -d " + get_domain_from_url(url) + " -t " + file_type + " -l " + str(configuration["metagoofil"]["total_results"]) + " -n " + str(configuration["metagoofil"]["total_downloads"]) + " -o " + str(configuration["metagoofil"]["output_directory"] + " -f "))
+    except Exception as e:
+        print(colored(e, "red"))
+
 def parse_arguments():
     parser = argparse.ArgumentParser("passive_recon_script", formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-sub", help = "Look for Subdomains", action = "store_true", required = False)
-    #parser.add_argument("-s",   help = "Run Shodan",         action = "store_true", required = False)
-    parser.add_argument("-ns",  help = "Run nslookup",        action = "store_true", required = False)
-    parser.add_argument("-n",   help = "Run nuclei",          action = "store_true", required = False)
-    parser.add_argument("-w",   help = "Run whatweb",         action = "store_true", required = False)
+    parser.add_argument("-sub", help = "Look for Subdomains", action  = "store_true", required = False)
+    #parser.add_argument("-s",   help = "Run Shodan",         action  = "store_true", required = False)
+    parser.add_argument("-ns",  help = "Run nslookup",        action  = "store_true", required = False)
+    parser.add_argument("-n",   help = "Run nuclei",          action  = "store_true", required = False)
+    parser.add_argument("-m",   help = "Run Metagoofil",      metavar = "file_type" , required = False)
+    parser.add_argument("-th",  help = "Run The Harvester",   action  = "store_true", required = False)
+    parser.add_argument("-w",   help = "Run whatweb",         action  = "store_true", required = False)
     parser.add_argument("-g",   help = "Run google dorks. \n\nOptions:\n\n0: Your Custom Queries (modify google_queries/custom_queries.txt including your google queries) file\n1: Footholds\n2: File containing Usernames\n3: Sensitives Directories\n4: Web Server Detection\n5: Vulnerable Files\n6: Vulnerable Servers\n7: Error Messages\n8: File Containing Juicy Info\n9: File Containing Passwords\n10: Sensitive Online Shopping Info\n11: Network or Vulnerability Data\n12: Pages Containing Login Portals\n13: Various Online Devices\n14: Advisories and Vulnerabilities\n\n", metavar = "option", required = False)
     parser.add_argument("-a",   help = "Run all tools",       metavar = "google_dorks_option", required = False)
     parser.add_argument("host_file") #Positional argument
@@ -113,6 +140,8 @@ def selected_option(args):
                 run_nslookup(host)
                 run_nuclei(host)
                 run_whatweb(host)
+                run_metagoofil(args.m, host)
+                run_theharvester(host)
                 run_google_dorking(int(args.a), host)
             else:
                 if args.sub:
@@ -125,9 +154,12 @@ def selected_option(args):
                     run_whatweb(host)
                 if args.g:
                     run_google_dorking(int(args.g), host)
+                if args.th:
+                    run_theharvester(host)
+                if args.m:
+                    run_metagoofil(args.m, host)
     except Exception as e:
         print(colored(e, "red"))
-        
 
 
 def main():

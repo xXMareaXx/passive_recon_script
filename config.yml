@@ -1,0 +1,5 @@
+metagoofil:
+    total_results: 10
+    total_downloads: 5
+    output_directory: metagoofil_files
+    output_file: metagoofil_output.html
