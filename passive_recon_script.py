@@ -5,6 +5,7 @@ import os
 import argparse
 import shodan
 from urllib.parse import urlparse
+import time
 
 GOOGLE_DORKS_OPTIONS_FILES = {
     1:  "footholds_query.txt",
@@ -23,6 +24,11 @@ GOOGLE_DORKS_OPTIONS_FILES = {
     14: "advisories_vulnerabilities_query.txt"
 }
 
+CONFIG_FILE = "config.yml"  
+
+def get_domain_from_url(url):
+    return urlparse(url).netloc
+
 def install_tool():
     req = "apt-get update;apt-get install golang;mkdir /root/Recon;cd /root/Recon;git clone https://github.com/projectdiscovery/subfinder.git;cd subfinder/v2/cmd/subfinder;go build .;mv subfinder /usr/local/bin;cd /root/Recon;git clone https://github.com/projectdiscovery/httpx.git;cd httpx/cmd/httpx;go build .;mv httpx /usr/local/bin;cd /root/Recon;git clone https://github.com/projectdiscovery/nuclei.git;cd nuclei/v2/cmd/nuclei;go build .;mv nuclei /usr/local/bin;cd /root/Recon/nuclei/v2/cmd/functional-test;go build .;mv functional-test /usr/local/bin;cd /root/Recon/nuclei/v2/cmd/integration-test;go build .;mv integration-test /usr/local/bin;cd /root/Recon;git clone https://github.com/projectdiscovery/notify.git;cd notify/cmd/notify;go build .;mv notify /usr/local/bin;cd /root/Recon;git clone https://github.com/tomnomnom/anew.git;cd anew;go mod init anew;go build .;mv anew /usr/local/bin"
     os.system(req)
@@ -33,33 +39,39 @@ def read_file(file_name):
     return file1.readlines()
 
 def run_subfinder(url):
-    # Method for running gsubfinder (-s option)
-    os.system("subfinder -d " + urlparse(url).netloc) #Using urlparse for getting domain from URL
+    try:
+        # Method for running gsubfinder (-sub option)
+        os.system("subfinder -d " + get_domain_from_url(url)) #Using urlparse for getting domain from URL
+    except Exception as e:
+        print(e)
 
-def run_google_dorking(option):
+def run_google_dorking(option, url):
     # Method for running google dorks (-g option)
-    results = []
-    query_file = GOOGLE_DORKS_OPTIONS_FILES[option]
-    print(query_file)
-    google_queries = read_file("google_queries/" + query_file)
-    hosts          = read_file("hosts.txt")
-    #print(hosts)
-    for query in google_queries:
-        for host in hosts:
-            print("--------------- Query: " + query + " ---------------")
-            print(host)
-            print(urlparse(host).netloc)
-            for j in search(query + " inurl:" + urlparse(host).netloc, num = 15, lang = "en", pause = 15):
+    results        = []
+    query_file     = GOOGLE_DORKS_OPTIONS_FILES[option]
+    try:
+        google_queries = read_file("google_queries/" + query_file)
+        hosts          = read_file("hosts.txt")
+        for query in google_queries:
+            print("Sleeping for 5 secs...")
+            time.sleep(5)
+            print("---- " + query + " ----")
+            for j in search(query + " inurl:" + get_domain_from_url(url), num = 15, lang = "en", pause = 60):
                 results.append({"query": query, "result": j})
+    except Exception as e:
+        print(e)
     return results
 
 def run_nuclei(url):
-    # Method for running nuclei with all templates (-n option)
-    print("Running nuclei")
+    try:
+        # Method for running nuclei with all templates (-n option)
+        os.system("nuclei -u " + url) #Using urlparse for getting domain from URL
+    except Exception as e:
+        print(e)
 
 def run_nslookup(url):
     # Method for running nslookup (-ns option)
-    print("Google Dorking")
+    print("Running NsLookup")
   
 def run_whatweb(url):
     # Method for running whatweb (-w option)
@@ -73,30 +85,53 @@ def run_all_tools(domain, url):
     # Method for running all tools (-a option)
     print("Running nuclei")
 
+def selected_option():
+    print("Get selected option")
+
 def parse_arguments():
     parser = argparse.ArgumentParser("passive_recon_script", formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-i",   help = "Install tool",                                                   action = "store_true", required = False)
+    parser.add_argument("-i",   help = "Install tool",        action = "store_true", required = False)
+    parser.add_argument("-sub", help = "Look for Subdomains", action = "store_true", required = False)
+    #parser.add_argument("-s",   help = "Run Shodan",         action = "store_true", required = False)
+    parser.add_argument("-ns",  help = "Run nslookup",        action = "store_true", required = False)
+    parser.add_argument("-n",   help = "Run nuclei",          action = "store_true", required = False)
+    parser.add_argument("-w",   help = "Run whatweb",         action = "store_true", required = False)
     parser.add_argument("-g",   help = "Run google dorks. \n\nOptions:\n\n1: Footholds\n2: File containing Usernames\n3: Sensitives Directories\n4: Web Server Detection\n5: Vulnerable Files\n6: Vulnerable Servers\n7: Error Messages\n8: File Containing Juicy Info\n9: File Containing Passwords\n10: Sensitive Online Shopping Info\n11: Network or Vulnerability Data\n12: Pages Containing Login Portals\n13: Various Online Devices\n14: Advisories and Vulnerabilities\n\n", metavar = "option", required = False)
-    parser.add_argument("-sub", help = "Look for Subdomains",                                            action = "store_true", required = False)
-    #parser.add_argument("-s",   help = "Run Shodan",                                                     action = "store_true", required = False)
-    parser.add_argument("-ns",  help = "Run nslookup",                                                   action = "store_true", required = False)
-    parser.add_argument("-n",   help = "Run nuclei",                                                     action = "store_true", required = False)
-    parser.add_argument("-w",   help = "Run whatweb",                                                    action = "store_true", required = False)
-    parser.add_argument("-a",   help = "Run all tools",                                                  action = "store_true", required = False)
+    parser.add_argument("-a",   help = "Run all tools",       action = "store_true", required = False)
     parser.add_argument("host_file") #Positional argument
     return parser
 
-def selected_option():
-    print("Get selected option")
+def selected_option(args):
+    selected_options = []
+    if args.i:
+        os.system("python3 install.py")
+    for host in read_file("hosts.txt"):
+        if args.a:
+            run_subfinder(host)
+            run_nslookup(host)
+            run_nuclei(host)
+            run_whatweb(host)
+            run_google_dorking(args.g, host)
+        else:
+            if args.sub:
+                run_subfinder(host)
+            if args.ns:
+                run_nslookup(host)
+            if args.n:
+                run_nuclei(host)
+            if args.w:
+                run_whatweb(host)
+            if args.g:
+                run_google_dorking(int(args.g), host)
+        
+
 
 def main():
     parser = parse_arguments()
     # Parsing args
     args, unknownargs = parser.parse_known_args()
     print(args)
-    print(unknownargs)
-    print(args.g)
-    run_google_dorking(int(args.g))
+    selected_option(args)
 
 
 if __name__ == '__main__':
