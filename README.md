@@ -33,8 +33,8 @@ Inside this directory there is a file called **hosts.txt** that contains the lis
 
 - For search subdomains with [Subfinder](https://github.com/projectdiscovery/subfinder) run **-sub** option.
 - For search vulnerabilities with [Nuclei](https://github.com/projectdiscovery/nuclei) run **-n** option.
-- For search DNS information with [Nslookup](https://docs.microsoft.com/es-es/windows-server/administration/windows-commands/nslookup) run **-n** option.
-- For [Google Dorks](https://www.exploit-db.com/google-hacking-database) run **-g <option>** option.
+- For search DNS information with [Nslookup](https://docs.microsoft.com/es-es/windows-server/administration/windows-commands/nslookup) run **-ns** option.
+- For [Google Dorks](https://www.exploit-db.com/google-hacking-database) run **-g <google_dorks_option> ** option.
 - For general information of the web with [Whatweb](https://github.com/urbanadventurer/WhatWeb) run **-w** option.
 - For getting files related with the host using [Metagoofil](https://www.kali.org/tools/metagoofil/) run **-m <file_type>** option.
 - For running [The Harvester](https://github.com/laramies/theHarvester) run **-th** option.
