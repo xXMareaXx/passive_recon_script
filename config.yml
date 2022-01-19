@@ -2,4 +2,5 @@ metagoofil:
     total_results: 10
     total_downloads: 5
     output_directory: metagoofil_files
-    output_file: metagoofil_output.html
+shodan:
+    api_key: WDI8du82qD02sQmPhshvIHQVeocySJy9

@@ -1,1 +1,1 @@
-inurl:passlist.txt
+intitle:Ganglia

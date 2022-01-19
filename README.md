@@ -10,9 +10,9 @@ This script centralize some passive recon tools:
 - [Subfinder](https://github.com/projectdiscovery/subfinder)
 - [GHDB](https://www.exploit-db.com/google-hacking-database)
 - [Metagoofil](https://www.kali.org/tools/metagoofil/)
-- [The Harvester](https://github.com/laramies/theHarvester)
 - [Nslookup](https://docs.microsoft.com/es-es/windows-server/administration/windows-commands/nslookup)
 - [Whatweb](https://github.com/urbanadventurer/WhatWeb)
+- [Shodan] (https://www.shodan.io/)
 
 ## Installation
 
@@ -23,13 +23,15 @@ python3 install.py
 ```
 
 ## Usage
+Inside this directory there is a file called **hosts.txt** that contains the list of the hosts you want to scan for. Modify it.
+
+There is also a [config.yml](https://github.com/xXMareaXx/passive_recon_script/blob/main/config.yml) file that contains some configuration. Modify it with the api keys needed (for example, Shodan api key)
 
 For showing the help for this tool run -h option:
 
 ```bash
 python3 passive_recon_script.py -h
 ```
-Inside this directory there is a file called **hosts.txt** that contains the list of the hosts you want to scan for. Modify it.
 
 - For search subdomains with [Subfinder](https://github.com/projectdiscovery/subfinder) run **-sub** option.
 - For search vulnerabilities with [Nuclei](https://github.com/projectdiscovery/nuclei) run **-n** option.
@@ -37,8 +39,7 @@ Inside this directory there is a file called **hosts.txt** that contains the lis
 - For [Google Dorks](https://www.exploit-db.com/google-hacking-database) run **-g <google_dorks_option>** option.
 - For general information of the web with [Whatweb](https://github.com/urbanadventurer/WhatWeb) run **-w** option.
 - For getting files related with the host using [Metagoofil](https://www.kali.org/tools/metagoofil/) run **-m <file_type>** option.
-- For running [The Harvester](https://github.com/laramies/theHarvester) run **-th** option.
-
+- For look for the IP with [Shodan](https://www.shodan.io/) run **-s** option.
 
 Almost all tools are launched by default, but there are two of theme that should be ran with arguments:
 

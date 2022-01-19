@@ -8,6 +8,7 @@ from urllib.parse import urlparse
 import time
 from termcolor import colored
 import yaml
+import socket
 
 GOOGLE_DORKS_OPTIONS_FILES = {
     0:  "custom_queries.txt",
@@ -65,7 +66,7 @@ def run_google_dorking(option, url):
         google_queries = read_file("google_queries/" + query_file)
         for query in google_queries:
             print("---- " + query + " ----")
-            for j in search(query + " inurl:" + get_domain_from_url(url), num = 5, lang = "en", pause = 60):
+            for j in search(query + " inurl:" + get_domain_from_url(url), num = 5, lang = "en", pause = 80):
                 results.append({"query": query, "result": j})
     except Exception as e:
         print(colored(e, "red"))
@@ -97,17 +98,11 @@ def run_whatweb(url):
 def run_shodan(url):
     # Method for running shodan (-s option)
     try:
-        print("Plantear si hacer shodan")
+        host_ip = socket.gethostbyname(get_domain_from_url(url)) # Getting IP from URL
+        api     = shodan.Shodan(read_config_file()["shodan"]["api_key"])
+        api.search(host_ip)
     except Exception as e:
         print(colored(e, "red"))
-
-def run_theharvester(url):
-    # Method for running TheHarvester (-th option)
-    try:
-        print("Running The Harvester...")
-    except Exception as e:
-        print(colored(e, "red"))
-
 
 def run_metagoofil(file_type, url):
     print(colored("--------------------- METAGOOFIL ---------------------", "green"))
@@ -121,46 +116,49 @@ def run_metagoofil(file_type, url):
 def parse_arguments():
     parser = argparse.ArgumentParser("passive_recon_script", formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("-sub", help = "Look for Subdomains", action  = "store_true", required = False)
-    #parser.add_argument("-s",   help = "Run Shodan",         action  = "store_true", required = False)
-    parser.add_argument("-ns",  help = "Run nslookup",        action  = "store_true", required = False)
-    parser.add_argument("-n",   help = "Run nuclei",          action  = "store_true", required = False)
+    parser.add_argument("-s",   help = "Run Shodan",          action  = "store_true", required = False)
+    parser.add_argument("-ns",  help = "Run Nslookup",        action  = "store_true", required = False)
+    parser.add_argument("-n",   help = "Run Nuclei",          action  = "store_true", required = False)
     parser.add_argument("-m",   help = "Run Metagoofil",      metavar = "file_type" , required = False)
-    parser.add_argument("-th",  help = "Run The Harvester",   action  = "store_true", required = False)
-    parser.add_argument("-w",   help = "Run whatweb",         action  = "store_true", required = False)
+    parser.add_argument("-w",   help = "Run Whatweb",         action  = "store_true", required = False)
     parser.add_argument("-g",   help = "Run google dorks. \n\nOptions:\n\n0: Your Custom Queries (modify google_queries/custom_queries.txt including your google queries) file\n1: Footholds\n2: File containing Usernames\n3: Sensitives Directories\n4: Web Server Detection\n5: Vulnerable Files\n6: Vulnerable Servers\n7: Error Messages\n8: File Containing Juicy Info\n9: File Containing Passwords\n10: Sensitive Online Shopping Info\n11: Network or Vulnerability Data\n12: Pages Containing Login Portals\n13: Various Online Devices\n14: Advisories and Vulnerabilities\n\n", metavar = "option", required = False)
     parser.add_argument("-a",   help = "Run all tools",       metavar = "google_dorks_option", required = False)
-    parser.add_argument("host_file") #Positional argument
+    parser.add_argument("hosts_file") #Positional argument
     return parser
 
 def selected_option(args):
-    try:
-        for host in read_file("hosts.txt"):
-            if args.a:
+    for host in read_file("hosts.txt"):
+        if args.a:
+            run_subfinder(host)
+            run_nslookup(host)
+            run_nuclei(host)
+            run_whatweb(host)
+            run_metagoofil(args.m, host)
+            run_google_dorking(int(args.a), host)
+            run_shodan(host)
+        else:
+            if args.sub:
                 run_subfinder(host)
+            if args.ns:
                 run_nslookup(host)
+            if args.n:
                 run_nuclei(host)
+            if args.w:
                 run_whatweb(host)
+            if args.g:
+                run_google_dorking(int(args.g), host)
+            if args.m:
                 run_metagoofil(args.m, host)
-                run_theharvester(host)
-                run_google_dorking(int(args.a), host)
-            else:
-                if args.sub:
-                    run_subfinder(host)
-                if args.ns:
-                    run_nslookup(host)
-                if args.n:
-                    run_nuclei(host)
-                if args.w:
-                    run_whatweb(host)
-                if args.g:
-                    run_google_dorking(int(args.g), host)
-                if args.th:
-                    run_theharvester(host)
-                if args.m:
-                    run_metagoofil(args.m, host)
+            if args.s:
+                run_shodan(host)
+
+def print_html_report(subfinder_result, print_html_report, nuclei_result, metagoofil_result, whatweb_result, google_dorks_result):
+    print(colored("--------------------- METAGOOFIL ---------------------", "green"))
+    # Method for running Metagoofil (-m)
+    try:
+        print("HTML Report")
     except Exception as e:
         print(colored(e, "red"))
-
 
 def main():
     parser = parse_arguments()
