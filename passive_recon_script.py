@@ -77,10 +77,12 @@ def run_google_dorking(option, url):
 
 def run_nuclei(url):
     # Method for running nuclei with all templates (-n option)
+    nuclei_output = ""
     try:
-        os.system("nuclei -u " + url)
+        nuclei_output = os.system("nuclei -u " + url + " -silent") 
     except Exception as e:
         print(colored(e, "red"))
+    return nuclei_output
 
 def run_nslookup(url):
     # Method for running nslookup (-ns option)
