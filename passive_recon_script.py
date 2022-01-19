@@ -9,6 +9,8 @@ import time
 from termcolor import colored
 import yaml
 import socket
+import json
+import sys
 
 GOOGLE_DORKS_OPTIONS_FILES = {
     0:  "custom_queries.txt",
@@ -39,7 +41,7 @@ def read_config_file():
 
 def get_domain_from_url(url):
     try:
-        return urlparse(url).netloc
+        return '.'.join(urlparse(url).netloc.split(".")[-2:])
     except Exception as e:
         print(colored(e, "red"))
 
@@ -53,8 +55,9 @@ def read_file(file_name):
 
 def run_subfinder(url):
     # Method for running gsubfinder (-sub option)
+    print(" Subfinder ")
     try:
-        os.system("subfinder -d " + get_domain_from_url(url)) #Using urlparse for getting domain from URL
+        os.system("subfinder -d " + get_domain_from_url(url) + " -silent") #Getting domain from URL and options -silent for only result in output
     except Exception as e:
         print(colored(e, "red"))
 
@@ -96,66 +99,91 @@ def run_whatweb(url):
         print(colored(e, "red"))
 
 def run_shodan(url):
+    return_shodan = ""
     # Method for running shodan (-s option)
-    try:
-        host_ip = socket.gethostbyname(get_domain_from_url(url)) # Getting IP from URL
-        api     = shodan.Shodan(read_config_file()["shodan"]["api_key"])
-        api.search(host_ip)
-    except Exception as e:
-        print(colored(e, "red"))
+    #try:
+    api     = shodan.Shodan(read_config_file()["shodan"]["api_key"])
+    host_ip = socket.gethostbyname(urlparse(url).netloc) # Getting IP from URL
+    host    = api.host(host_ip)
+    #json.dumps(host, sort_keys=True, indent=4)
+    print(colored ("---- Hostnames ----", "blue"))
+    print(host["hostnames"])
+    print(colored ("---- Domains ----", "blue"))
+    print(host["domains"])
+    # Print all banners
+    for item in host['data']:
+        print(colored("Port: ", "green")   + str(item['port']))
+        print(colored("Banner:\n", "green") + str(item['data']))
+
+    # Print vuln information
+    if "vulns" in host:
+        for vuln in host['vulns']:
+            CVE = vuln.replace('!','')
+            print(colored("Vulns: " + vuln, "red"))    
 
 def run_metagoofil(file_type, url):
     print(colored("--------------------- METAGOOFIL ---------------------", "green"))
     # Method for running Metagoofil (-m)
     try:
         configuration = read_config_file()
-        os.system("metagoofil -d " + get_domain_from_url(url) + " -t " + file_type + " -l " + str(configuration["metagoofil"]["total_results"]) + " -n " + str(configuration["metagoofil"]["total_downloads"]) + " -o " + str(configuration["metagoofil"]["output_directory"] + " -f "))
+        os.system("cd metagoofil; python3 metagoofil.py -d " + urlparse(url).netloc + " -t " + file_type + " -l " + str(configuration["metagoofil"]["total_results"]) + " -n " + str(configuration["metagoofil"]["total_downloads"]))
+        #os.system("metagoofil -d " + urlparse(url).netloc + " -t " + file_type + " -l " + str(configuration["metagoofil"]["total_results"]) + " -n " + str(configuration["metagoofil"]["total_downloads"]) + " -o " + str(configuration["metagoofil"]["output_directory"] + " -f "))
     except Exception as e:
         print(colored(e, "red"))
 
 def parse_arguments():
-    parser = argparse.ArgumentParser("passive_recon_script", formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("-sub", help = "Look for Subdomains", action  = "store_true", required = False)
-    parser.add_argument("-s",   help = "Run Shodan",          action  = "store_true", required = False)
-    parser.add_argument("-ns",  help = "Run Nslookup",        action  = "store_true", required = False)
-    parser.add_argument("-n",   help = "Run Nuclei",          action  = "store_true", required = False)
-    parser.add_argument("-m",   help = "Run Metagoofil",      metavar = "file_type" , required = False)
-    parser.add_argument("-w",   help = "Run Whatweb",         action  = "store_true", required = False)
+    parser = argparse.ArgumentParser("passive_recon_script",  formatter_class = argparse.RawTextHelpFormatter)
+    parser.add_argument("-sub", help = "Look for Subdomains with Subfinder", action  = "store_true", required = False)
+    parser.add_argument("-s",   help = "Run Shodan",                         action  = "store_true", required = False)
+    parser.add_argument("-ns",  help = "Run Nslookup",                       action  = "store_true", required = False)
+    parser.add_argument("-n",   help = "Run Nuclei",                         action  = "store_true", required = False)
+    parser.add_argument("-m",   help = "Run Metagoofil",                     metavar = "file_type" , required = False)
+    parser.add_argument("-w",   help = "Run Whatweb",                        action  = "store_true", required = False)
     parser.add_argument("-g",   help = "Run google dorks. \n\nOptions:\n\n0: Your Custom Queries (modify google_queries/custom_queries.txt including your google queries) file\n1: Footholds\n2: File containing Usernames\n3: Sensitives Directories\n4: Web Server Detection\n5: Vulnerable Files\n6: Vulnerable Servers\n7: Error Messages\n8: File Containing Juicy Info\n9: File Containing Passwords\n10: Sensitive Online Shopping Info\n11: Network or Vulnerability Data\n12: Pages Containing Login Portals\n13: Various Online Devices\n14: Advisories and Vulnerabilities\n\n", metavar = "option", required = False)
-    parser.add_argument("-a",   help = "Run all tools",       metavar = "google_dorks_option", required = False)
+    #parser.add_argument("-a",   help = "Run all tools",       metavar = "google_dorks_option", required = False)
     parser.add_argument("hosts_file") #Positional argument
     return parser
 
 def selected_option(args):
+    return_subfinder    = ""
+    return_nslookup     = ""
+    return_nuclei       = ""
+    return_whatweb      = ""
+    return_metagoofil   = ""
+    return_google_dorks = ""
+    return_shodan       = ""
     for host in read_file("hosts.txt"):
-        if args.a:
-            run_subfinder(host)
-            run_nslookup(host)
-            run_nuclei(host)
-            run_whatweb(host)
-            run_metagoofil(args.m, host)
-            run_google_dorking(int(args.a), host)
-            run_shodan(host)
-        else:
-            if args.sub:
-                run_subfinder(host)
-            if args.ns:
-                run_nslookup(host)
-            if args.n:
-                run_nuclei(host)
-            if args.w:
-                run_whatweb(host)
-            if args.g:
-                run_google_dorking(int(args.g), host)
-            if args.m:
-                run_metagoofil(args.m, host)
-            if args.s:
-                run_shodan(host)
+       # if args.a:
+       #     return_subfinder    = run_subfinder(host)
+       #     return_nslookup     = run_nslookup(host)
+       #     return_nuclei       = run_nuclei(host)
+       #     return_whatweb      = run_whatweb(host)
+       #     return_metagoofil   = run_metagoofil(args.m, host)
+       #     return_google_dorks = run_google_dorking(int(args.a), host)
+       #     return_shodan       = run_shodan(host)
+       # else:
+        if args.sub:
+            return_subfinder    = run_subfinder(host)
+        if args.ns:
+            return_nslookup     = run_nslookup(host)
+        if args.n:
+            return_nuclei       = run_nuclei(host)
+        if args.w:
+            return_whatweb      = run_whatweb(host)
+        if args.g:
+            return_google_dorks = run_google_dorking(int(args.g), host)
+        if args.m:
+            return_metagoofil   = run_metagoofil(args.m, host)
+        if args.s:
+            return_shodan       = run_shodan(host)
 
-def print_html_report(subfinder_result, print_html_report, nuclei_result, metagoofil_result, whatweb_result, google_dorks_result):
-    print(colored("--------------------- METAGOOFIL ---------------------", "green"))
-    # Method for running Metagoofil (-m)
+    print_html_report(return_subfinder, return_nslookup, return_nuclei, return_metagoofil, return_whatweb, return_google_dorks, return_shodan)
+
+def print_html_report(subfinder_result, nslookup_result, nuclei_result, metagoofil_result, whatweb_result, google_dorks_result, shodan_result):
+    print(colored("--------------------- Print HTML ---------------------", "green"))
     try:
+        f = open("passive_recon_script_report.html", "a")
+        #f.write(shodan_result)
         print("HTML Report")
     except Exception as e:
         print(colored(e, "red"))
