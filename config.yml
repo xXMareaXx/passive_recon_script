@@ -3,4 +3,4 @@ metagoofil:
     total_downloads: 5
     output_directory: metagoofil_files
 shodan:
-    api_key: <SHODAN_API_KEY>z
+    api_key: <SHODAN_API_KEY>
