@@ -12,7 +12,6 @@ This script centralize some passive recon tools:
 - [Metagoofil](https://www.kali.org/tools/metagoofil/)
 - [Nslookup](https://docs.microsoft.com/es-es/windows-server/administration/windows-commands/nslookup)
 - [Whatweb](https://github.com/urbanadventurer/WhatWeb)
-- [Shodan] (https://www.shodan.io/)
 
 ## Installation
 
